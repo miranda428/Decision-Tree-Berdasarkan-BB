@@ -1,0 +1,64 @@
+# 1. Import library
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# 2. Load dataset
+# Dataset dari UCI (https://www.kaggle.com/datasets/cherngs/heart-disease-cleveland-uci)
+df = pd.read_csv("heart.csv")  # Pastikan file 'heart.csv' ada dalam direktori kerja
+
+# 3. Cek data
+print("Informasi Dataset:")
+print(df.info())
+print("\nStatistik Ringkasan:")
+print(df.describe())
+
+# 4. Preprocessing
+# Ubah target ke bentuk biner (0: tidak sakit, 1: sakit)
+df["target"] = df["target"].apply(lambda x: 1 if x > 0 else 0)
+
+# Cek missing values
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# 5. Pisahkan fitur dan label
+X = df.drop("target", axis=1)
+Y = df["target"]
+
+# 6. Bagi data menjadi training dan testing
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=42
+)
+
+# 7. Latih model Logistic Regression
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, Y_train)
+
+# 8. Evaluasi model
+Y_pred = model.predict(X_test)
+accuracy = accuracy_score(Y_test, Y_pred)
+
+print("\nEvaluasi Model Logistic Regression:")
+print(f"Akurasi: {accuracy:.2f}")
+print(classification_report(Y_test, Y_pred))
+
+# 9. Confusion Matrix
+conf_matrix = confusion_matrix(Y_test, Y_pred)
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+# 10. Simpan model ke dalam file
+import pickle
+
+with open("models/heart_disease_model.pkl", "wb") as file:
+    pickle.dump(model, file)
+
+print("Model berhasil disimpan sebagai 'heart_disease_model.pkl'")
