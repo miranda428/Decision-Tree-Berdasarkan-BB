@@ -1,0 +1,90 @@
+# Import library yang diperlukan
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.metrics import accuracy_score, classification_report
+import pickle
+
+# 1. Membuat dataset sintetik (500 sampel)
+np.random.seed(42)
+tinggi = np.random.randint(140, 191, 500)  # Tinggi badan 140-190 cm
+berat = np.random.randint(40, 91, 500)    # Berat badan 40-90 kg
+
+# Membuat label: 1 jika tinggi + berat > 200, 0 jika tidak
+label = (tinggi + berat > 200).astype(int)
+
+# Membuat DataFrame
+df = pd.DataFrame({
+    'Tinggi (cm)': tinggi,
+    'Berat (kg)': berat,
+    'Label': label
+})
+
+# Menampilkan 5 data pertama
+print("5 Data Pertama:")
+print(df.head())
+print("\nDistribusi Label:")
+print(df['Label'].value_counts())
+
+# 2. Memisahkan data training dan testing
+X = df[['Tinggi (cm)', 'Berat (kg)']]
+y = df['Label']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, 
+    test_size=0.2, 
+    random_state=42,
+    stratify=y  # Mempertahankan distribusi label
+)
+
+print(f"\nJumlah Data Training: {len(X_train)}")
+print(f"Jumlah Data Testing: {len(X_test)}")
+
+# 3. Membuat dan melatih model Decision Tree
+model = DecisionTreeClassifier(
+    max_depth=3,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# 4. Evaluasi model
+y_pred = model.predict(X_test)
+
+print("\nEvaluasi Model:")
+print(f"Akurasi: {accuracy_score(y_test, y_pred):.2f}")
+print("\nLaporan Klasifikasi:")
+print(classification_report(y_test, y_pred))
+
+# 5. Visualisasi Decision Tree
+plt.figure(figsize=(15, 8))
+plot_tree(
+    model,
+    feature_names=['Tinggi (cm)', 'Berat (kg)'],
+    class_names=['Tidak > 200', '> 200'],
+    filled=True,
+    rounded=True,
+    proportion=True,
+    fontsize=10
+)
+plt.title("Visualisasi Decision Tree")
+plt.show()
+
+# 6. Menyimpan model
+with open('decision_tree_model.pkl', 'wb') as file:
+    pickle.dump(model, file)
+
+print("\nModel telah disimpan sebagai 'decision_tree_model.pkl'")
+
+# 7. Contoh prediksi
+contoh_data = pd.DataFrame({
+    'Tinggi (cm)': [160, 185, 175],
+    'Berat (kg)': [50, 85, 70]
+})
+
+prediksi = model.predict(contoh_data)
+print("\nContoh Prediksi:")
+for i, (tinggi, berat) in enumerate(zip(contoh_data['Tinggi (cm)'], contoh_data['Berat (kg)'])):
+    print(f"Data {i+1}: Tinggi={tinggi}cm, Berat={berat}kg -> Prediksi: {'>200' if prediksi[i] else '≤200'}")
