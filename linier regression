@@ -1,0 +1,106 @@
+# 1. Import Library yang Dibutuhkan
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import pickle
+
+# 2. Membuat Dataset Sintetik
+np.random.seed(42)  # Untuk reproduktibilitas hasil
+
+# Membuat data asupan kalori (X) antara 1500-4000 kalori/hari
+kalori = np.random.randint(1500, 4001, 100)
+
+# Membuat data berat badan (Y) dengan hubungan linear + noise
+# Asumsi: setiap 100 kalori ekstra menambah 0.1kg berat badan
+berat_badan = 50 + 0.001 * kalori + np.random.randn(100) * 2
+
+# Membuat DataFrame
+df = pd.DataFrame({
+    'Kalori (kCal/hari)': kalori,
+    'Berat Badan (kg)': berat_badan
+})
+
+# 3. Eksplorasi Data Awal
+print("\n=== EKSPLORASI DATA ===")
+print("5 Data Pertama:")
+print(df.head())
+print("\nStatistik Deskriptif:")
+print(df.describe())
+
+# Visualisasi data awal
+plt.figure(figsize=(10, 6))
+plt.scatter(df['Kalori (kCal/hari)'], df['Berat Badan (kg)'], alpha=0.7)
+plt.title('Hubungan Asupan Kalori dan Berat Badan')
+plt.xlabel('Asupan Kalori (kCal/hari)')
+plt.ylabel('Berat Badan (kg)')
+plt.grid(True)
+plt.show()
+
+# 4. Persiapan Data
+X = df[['Kalori (kCal/hari)']]  # Feature
+y = df['Berat Badan (kg)']       # Target
+
+# Membagi data menjadi training (80%) dan testing (20%)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, 
+    test_size=0.2, 
+    random_state=42
+)
+
+print(f"\nJumlah Data Training: {len(X_train)}")
+print(f"Jumlah Data Testing: {len(X_test)}")
+
+# 5. Membuat dan Melatih Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Menampilkan parameter model
+print("\n=== HASIL TRAINING MODEL ===")
+print(f"Intercept (b0): {model.intercept_:.2f}")
+print(f"Koefisien (b1): {model.coef_[0]:.4f}")
+
+# 6. Melakukan Prediksi
+y_pred = model.predict(X_test)
+
+# 7. Evaluasi Model
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2 = r2_score(y_test, y_pred)
+
+print("\n=== EVALUASI MODEL ===")
+print(f"Mean Squared Error (MSE): {mse:.2f}")
+print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
+print(f"R-squared Score (R²): {r2:.4f}")
+
+# 8. Visualisasi Hasil
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test, y_test, color='blue', label='Data Aktual', alpha=0.7)
+plt.plot(X_test, y_pred, color='red', linewidth=2, label='Garis Regresi')
+plt.title('Prediksi Berat Badan vs Asupan Kalori')
+plt.xlabel('Asupan Kalori (kCal/hari)')
+plt.ylabel('Berat Badan (kg)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 9. Menyimpan Model
+with open('berat_badan_model.pkl', 'wb') as file:
+    pickle.dump(model, file)
+
+print("\nModel berhasil disimpan sebagai 'berat_badan_model.pkl'")
+
+# 10. Contoh Penggunaan Model
+def prediksi_berat(kalori_input):
+    """Fungsi untuk memprediksi berat badan"""
+    prediksi = model.predict([[kalori_input]])
+    return prediksi[0]
+
+# Contoh prediksi
+contoh_kalori = [2000, 2500, 3000, 3500]
+print("\n=== CONTOH PREDIKSI ===")
+for kal in contoh_kalori:
+    berat_pred = prediksi_berat(kal)
+    print(f"Asupan {kal} kCal/hari -> Prediksi berat badan: {berat_pred:.2f} kg")
